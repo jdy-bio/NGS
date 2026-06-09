@@ -22,30 +22,16 @@ ANALYZED_DIR.mkdir(parents=True, exist_ok=True)
 
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 
-TRIM_DIR.mkdir(
-    parents=True,
-    exist_ok=True
-)
+TRIM_DIR.mkdir(parents=True, exist_ok=True)
 
-BAM_DIR.mkdir(
-    parents=True,
-    exist_ok=True
-)
+BAM_DIR.mkdir(parents=True, exist_ok=True)
 
-VARIANT_DIR.mkdir(
-    parents=True,
-    exist_ok=True
-)
+VARIANT_DIR.mkdir(parents=True, exist_ok=True)
 
-LOG_DIR.mkdir(
-    parents=True,
-    exist_ok=True
-)
+LOG_DIR.mkdir(parents=True, exist_ok=True)
 
 
-# =========================================================
-# 3. 실행 설정
-# =========================================================
+# 실행 설정
 
 RUN_EXTERNAL_TOOLS = False
 THREADS = 4
@@ -53,9 +39,7 @@ THREADS = 4
 REFERENCE = ANALYZED_DIR / "reference.fa"
 
 
-# =========================================================
-# 4. 외부 프로그램 실행 여부
-# =========================================================
+# 외부 프로그램 실행 여부
 
 if not RUN_EXTERNAL_TOOLS:
     print(
