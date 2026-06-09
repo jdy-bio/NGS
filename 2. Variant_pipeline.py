@@ -4,13 +4,11 @@ import shutil
 import subprocess
 
 if platform.system() != "Linux":
-    print(
-        "실행 실패: "
-        "이 코드는 Linux 또는 WSL Ubuntu에서 실행하세요."
-    )
+    print("실행 실패: Linux 또는 WSL Ubuntu에서 실행하세요.")
     raise SystemExit(1)
 
 SCRIPT_DIR = Path(__file__).resolve().parent
+
 ANALYZED_DIR = SCRIPT_DIR / "Analyzed"
 DATA_DIR = SCRIPT_DIR / "data"
 TRIM_DIR = DATA_DIR / "trimmed_fastq"
