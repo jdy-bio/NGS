@@ -34,7 +34,6 @@ for r1_path in r1_files:
         continue
 
     # R1과 R2 파일을 함께 처리하기 위한 딕셔너리 생성
-
     paired_files = {"R1": r1_path, "R2": r2_path}
 
     for mate, fastq_path in paired_files.items():
@@ -95,7 +94,7 @@ output_path = (OUTPUT_DIR / "fastq_qc_summary.csv")
 try:
 
     if result_df.empty:
-        print("저장 실패: Analyzed 폴더에서 분석 가능한 R1/R2 FASTQ 파일을 찾지 못했습니다.")
+        print("Analyzed 폴더에서 분석 가능한 R1/R2 FASTQ 파일이 없습니다.")
 
     else:
         result_df.to_csv(output_path, index=False)

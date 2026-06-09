@@ -48,13 +48,13 @@ if aligner is None:
     missing_tools.append("bwa-mem2 또는 bwa")
 
 if missing_tools:
-    print("실행 실패: 필요한 프로그램이 설치되어 있지 않습니다.")
+    print("필요한 프로그램이 설치되어 있지 않습니다.")
     print("설치되지 않은 프로그램: " + ", ".join(missing_tools))
     print()
     raise SystemExit(1)
 
 if not REFERENCE.exists():
-    print("실행 실패: Analyzed 폴더에 reference.fa가 없습니다.")
+    print("Analyzed 폴더에 reference.fa가 없습니다.")
     raise SystemExit(1)
 
 if aligner == "bwa-mem2":
@@ -73,7 +73,7 @@ else:
 if not reference_index_exists:
     try:
         subprocess.run([aligner, "index", str(REFERENCE),], check=True)
-        print("reference index 생성 완료")
+        print("reference index 생성")
 
     except subprocess.CalledProcessError as error:
         print(f"reference index 생성 실패: {error}")
@@ -82,7 +82,7 @@ if not reference_index_exists:
 r1_files = sorted(list(ANALYZED_DIR.glob("*_R1.fastq.gz")) +list(ANALYZED_DIR.glob("*_R1.fastq")))
 
 if not r1_files:
-    print("실행 실패: Analyzed 폴더에서 R1 FASTQ를 찾지 못했습니다.")
+    print("Analyzed 폴더에서 R1 FASTQ를 찾지 못했습니다.")
     raise SystemExit(1)
 
 success_count = 0
@@ -99,7 +99,7 @@ for r1_path in r1_files:
         r2_path = (ANALYZED_DIR / f"{sample}_R2.fastq")
 
     if not r2_path.exists():
-        print(f"{sample} 분석 실패: R2 파일이 없습니다.")
+        print(f"{sample} R2 파일이 없습니다.")
         fail_count += 1
         continue
 
