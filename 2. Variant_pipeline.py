@@ -3,8 +3,6 @@ import platform
 import shutil
 import subprocess
 
-# Linux 환경 확인
-
 if platform.system() != "Linux":
     print(
         "실행 실패: "
@@ -12,21 +10,13 @@ if platform.system() != "Linux":
     )
     raise SystemExit(1)
 
-# 코드가 있는 위치 기준으로 폴더 설정
 SCRIPT_DIR = Path(__file__).resolve().parent
-
-# 입력 FASTQ와 reference.fa를 넣는 폴더
 ANALYZED_DIR = SCRIPT_DIR / "Analyzed"
-
-# 결과를 저장하는 최상위 폴더
 DATA_DIR = SCRIPT_DIR / "data"
-
 TRIM_DIR = DATA_DIR / "trimmed_fastq"
 BAM_DIR = DATA_DIR / "bam"
 VARIANT_DIR = DATA_DIR / "variants"
 LOG_DIR = DATA_DIR / "logs"
-
-# 필요한 폴더 자동 생성
 
 for directory in [
     ANALYZED_DIR,
@@ -43,8 +33,6 @@ for directory in [
 THREADS = 4
 REFERENCE = ANALYZED_DIR / "reference.fa"
 
-# 필요한 외부 프로그램 확인
-
 if shutil.which("bwa-mem2"):
     aligner = "bwa-mem2"
 
@@ -56,7 +44,6 @@ else:
 
 
 required_tools = ["fastp", "samtools", "bcftools",]
-
 missing_tools = [tool for tool in required_tools if shutil.which(tool) is None]
 
 if aligner is None:
@@ -68,13 +55,9 @@ if missing_tools:
     print()
     raise SystemExit(1)
 
-# reference 파일 확인
-
 if not REFERENCE.exists():
     print("실행 실패: Analyzed 폴더에 reference.fa가 없습니다.")
     raise SystemExit(1)
-
-# reference index 생성
 
 if aligner == "bwa-mem2":
     reference_index_exists = any(ANALYZED_DIR.glob("reference.fa.*"))
@@ -87,84 +70,53 @@ else:
         Path(str(REFERENCE) + ".pac"),
         Path(str(REFERENCE) + ".sa"),
     ]
-
     reference_index_exists = all(index_file.exists() for index_file in bwa_index_files)
 
 if not reference_index_exists:
     try:
         subprocess.run([aligner, "index", str(REFERENCE),], check=True)
-        print(
-            "reference index 생성 완료"
-        )
+        print("reference index 생성 완료")
 
     except subprocess.CalledProcessError as error:
         print(f"reference index 생성 실패: {error}")
         raise SystemExit(1)
 
-# R1 FASTQ 파일 자동 검색
-
-r1_files = sorted(
-    list(ANALYZED_DIR.glob("*_R1.fastq.gz"))
-    +
-    list(ANALYZED_DIR.glob("*_R1.fastq"))
-)
-
+r1_files = sorted(list(ANALYZED_DIR.glob("*_R1.fastq.gz")) +list(ANALYZED_DIR.glob("*_R1.fastq")))
 
 if not r1_files:
     print("실행 실패: Analyzed 폴더에서 R1 FASTQ를 찾지 못했습니다.")
-
     raise SystemExit(1)
-
-# 샘플별 분석
 
 success_count = 0
 fail_count = 0
 
 for r1_path in r1_files:
 
-    # 샘플 이름과 R2 경로 생성
-
     if r1_path.name.endswith("_R1.fastq.gz"):
         sample = r1_path.name.replace("_R1.fastq.gz", "")
-
         r2_path = (ANALYZED_DIR / f"{sample}_R2.fastq.gz")
 
     else:
         sample = r1_path.name.replace("_R1.fastq", "")
-
         r2_path = (ANALYZED_DIR / f"{sample}_R2.fastq")
-
-    # R2 파일 확인
 
     if not r2_path.exists():
         print(f"{sample} 분석 실패: R2 파일이 없습니다.")
         fail_count += 1
         continue
 
-    # 결과 파일 경로 설정
-
     trim_r1 = (TRIM_DIR / f"{sample}_R1.trim.fastq.gz")
-
     trim_r2 = (TRIM_DIR / f"{sample}_R2.trim.fastq.gz")
-
     bam_path = (BAM_DIR / f"{sample}.sorted.bam")
-
     raw_vcf = (VARIANT_DIR / f"{sample}.raw.vcf.gz")
-
     fastp_html = (LOG_DIR / f"{sample}.fastp.html")
-
     fastp_json = (LOG_DIR / f"{sample}.fastp.json")
-
     fastp_log = (LOG_DIR / f"{sample}.fastp.log")
-
     bwa_log = (LOG_DIR / f"{sample}.bwa.log")
-
     variant_log = (LOG_DIR / f"{sample}.variant.log")
 
     try:
-
         # fastp 전처리
-
         with open(fastp_log, "w") as log_file:
             subprocess.run(
                 [
@@ -198,28 +150,12 @@ for r1_path in r1_files:
             )
 
         # BWA 정렬 + sorted BAM 생성
-
         align_command = [aligner, "mem", "-t", str(THREADS), str(REFERENCE), str(trim_r1), str(trim_r2),]
 
         with open(bwa_log, "w") as bwa_log_file:
 
             with subprocess.Popen(align_command, stdout=subprocess.PIPE, stderr=bwa_log_file) as bwa_process:
-
-                subprocess.run(
-                    [
-                        "samtools",
-                        "sort",
-
-                        "-@",
-                        str(THREADS),
-
-                        "-o",
-                        str(bam_path),
-                    ],
-
-                    stdin=bwa_process.stdout,
-                    check=True
-                )
+                subprocess.run(["samtools", "sort", "-@", str(THREADS), "-o", str(bam_path),], stdin=bwa_process.stdout, check=True)
 
                 if bwa_process.stdout is not None:
                     bwa_process.stdout.close()
@@ -230,16 +166,13 @@ for r1_path in r1_files:
                     raise subprocess.CalledProcessError(bwa_return_code, align_command)
 
         # BAM index 생성
-
         subprocess.run(["samtools", "index", "-@", str(THREADS), str(bam_path), ], check=True)
 
 
         # 변이 검출
-        
         with open(variant_log, "w") as variant_log_file:
 
             with subprocess.Popen(["bcftools", "mpileup", "-f", str(REFERENCE), str(bam_path), "-Ou",], stdout=subprocess.PIPE, stderr=variant_log_file) as mpileup_process:
-
                 subprocess.run(["bcftools", "call", "-m", "-v", "-Oz", "-o", str(raw_vcf),], stdin=mpileup_process.stdout, stderr=variant_log_file, check=True)
 
                 if mpileup_process.stdout is not None:
@@ -251,23 +184,14 @@ for r1_path in r1_files:
                     raise subprocess.CalledProcessError(mpileup_return_code,["bcftools", "mpileup"])
 
         # VCF index 생성
-
         subprocess.run(["bcftools", "index", "-t", str(raw_vcf),], check=True)
-
         print(f"{sample} 분석 및 저장 완료")
-
         success_count += 1
 
-
     except subprocess.CalledProcessError as error:
-
         print(f"{sample} 분석 실패: " f"{error}")
-
         print(f"로그 확인: {LOG_DIR}")
-        
         fail_count += 1
-
-# 전체 완료
 
 if fail_count == 0:
     print(f"전체 분석 완료: "f"{success_count}개 샘플")
