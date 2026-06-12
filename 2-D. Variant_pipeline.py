@@ -73,7 +73,6 @@ else:
 if not reference_index_exists:
     try:
         subprocess.run([aligner, "index", str(REFERENCE),], check=True)
-        print("reference index 생성")
 
     except subprocess.CalledProcessError as error:
         print(f"reference index 생성 실패: {error}")
